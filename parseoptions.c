@@ -29,14 +29,14 @@ enum {	OPT_COUNT, OPT_INTERVAL, OPT_NUMERIC, OPT_QUIET, OPT_INTERFACE,
 	OPT_SAFE, OPT_TRACEROUTE, OPT_TOS, OPT_MTU, OPT_SEQNUM, OPT_BADCKSUM,
 	OPT_SETSEQ, OPT_SETACK, OPT_ICMPTYPE, OPT_ICMPCODE, OPT_END,
 	OPT_RROUTE, OPT_IPPROTO, OPT_ICMP_IPVER, OPT_ICMP_IPHLEN,
-	OPT_ICMP_IPLEN, OPT_ICMP_IPID, OPT_ICMP_IPPROTO, OPT_ICMP_CKSUM,
+	OPT_ICMP_IPLEN, OPT_ICMP_IPID, OPT_ICMP_IPPROTO, OPT_ICMP_CKSUM, OPT_ICMP_ID,
 	OPT_ICMP_TS, OPT_ICMP_ADDR, OPT_TCPEXITCODE, OPT_FAST, OPT_TR_KEEP_TTL,
 	OPT_TCP_TIMESTAMP, OPT_TR_STOP, OPT_TR_NO_RTT, OPT_ICMP_HELP,
 	OPT_RAND_DEST, OPT_RAND_SOURCE, OPT_LSRR, OPT_SSRR, OPT_ROUTE_HELP,
 	OPT_ICMP_IPSRC, OPT_ICMP_IPDST, OPT_ICMP_SRCPORT, OPT_ICMP_DSTPORT,
 	OPT_ICMP_GW, OPT_FORCE_ICMP, OPT_APD_SEND, OPT_SCAN, OPT_FASTER,
 	OPT_BEEP, OPT_FLOOD, OPT_CLOCK_SKEW, OPT_CS_WINDOW, OPT_CS_WINDOW_SHIFT,
-        OPT_CS_VECTOR_LEN };
+        OPT_CS_VECTOR_LEN, OPT_TCPRECVFLAGS, OPT_TCPRECVPKTS, OPT_WAITPKTS };
 
 static struct ago_optlist hping_optlist[] = {
 	{ 'c',	"count",	OPT_COUNT,		AGO_NEEDARG },
@@ -102,6 +102,7 @@ static struct ago_optlist hping_optlist[] = {
 	{ '\0',	"icmp-ipid",	OPT_ICMP_IPID,	 	AGO_NEEDARG|AGO_EXCEPT0 },
 	{ '\0',	"icmp-ipproto",	OPT_ICMP_IPPROTO, 	AGO_NEEDARG|AGO_EXCEPT0 },
 	{ '\0', "icmp-cksum",	OPT_ICMP_CKSUM,   	AGO_NEEDARG|AGO_EXCEPT0 },
+ 	{ '\0', "icmp-id",	OPT_ICMP_ID,   		AGO_NEEDARG|AGO_EXCEPT0 },
 	{ '\0',	"icmp-ts",	OPT_ICMP_TS,		AGO_NOARG },
 	{ '\0', "icmp-addr",	OPT_ICMP_ADDR,		AGO_NOARG },
 	{ '\0', "tcpexitcode",	OPT_TCPEXITCODE,	AGO_NOARG },
@@ -109,6 +110,9 @@ static struct ago_optlist hping_optlist[] = {
 	{ '\0',	"faster",	OPT_FASTER,		AGO_NOARG|AGO_EXCEPT0 },
 	{ '\0',	"tr-keep-ttl",	OPT_TR_KEEP_TTL,	AGO_NOARG },
 	{ '\0', "tcp-timestamp",OPT_TCP_TIMESTAMP,	AGO_NOARG },
+	{ '\0', "tcp-recv-flags", OPT_TCPRECVFLAGS,     AGO_NEEDARG|AGO_EXCEPT0 },
+	{ '\0', "tcp-recv-pkts", OPT_TCPRECVPKTS,       AGO_NOARG },
+	{ '\0', "wait-pkts",    OPT_WAITPKTS,           AGO_NEEDARG|AGO_EXCEPT0 },
 	{ '\0', "tr-stop",	OPT_TR_STOP,		AGO_NOARG },
 	{ '\0',	"tr-no-rtt",	OPT_TR_NO_RTT,		AGO_NOARG },
 	{ '\0', "rand-dest",	OPT_RAND_DEST,		AGO_NOARG },
@@ -469,6 +473,9 @@ int parse_options(int argc, char **argv)
 		case OPT_ICMP_IPID:
 			icmp_ip_id = strtol(ago_optarg, NULL, 0);
 			break;
+		case OPT_ICMP_ID:
+			icmp_id = strtol(ago_optarg, NULL, 0);
+			break;
 		case OPT_ICMP_IPPROTO:
 			icmp_ip_protocol = strtol(ago_optarg, NULL, 0);
 			break;
@@ -517,6 +524,15 @@ int parse_options(int argc, char **argv)
 		case OPT_TCP_TIMESTAMP:
 			opt_tcp_timestamp = TRUE;
 			break;
+		case OPT_TCPRECVFLAGS:
+		        strlcpy (opt_tcprecvflags, ago_optarg, 16);
+			break;			
+		case OPT_TCPRECVPKTS:
+			opt_tcprecvpkts = TRUE;
+			break;
+                case OPT_WAITPKTS:
+		        opt_waitpkts = strtol(ago_optarg, NULL, 0);
+                        break;
 		case OPT_TR_STOP:
 			opt_tr_stop = TRUE;
 			break;
@@ -688,5 +704,36 @@ int parse_options(int argc, char **argv)
 		usec_delay.it_interval.tv_usec = 0;
 	}
 
+	if (opt_tcprecvflags[0] != '\0') {
+	  if (strchr(opt_tcprecvflags, 'F') != NULL) {
+	    tcp_recv_flags |= TH_FIN;
+	  }
+	  if (strchr(opt_tcprecvflags, 'S') != NULL) {
+	    tcp_recv_flags |= TH_SYN;
+	  }
+	  if (strchr(opt_tcprecvflags, 'A') != NULL) {
+	    tcp_recv_flags |= TH_ACK;
+	  }
+	  if (strchr(opt_tcprecvflags, 'P') != NULL) {
+	    tcp_recv_flags |= TH_PUSH;
+	  }
+	  if (strchr(opt_tcprecvflags, 'U') != NULL) {
+	    tcp_recv_flags |= TH_URG;
+	  }
+	  if (strchr(opt_tcprecvflags, 'X') != NULL) {
+	    tcp_recv_flags |= TH_X;
+	  }
+	  if (strchr(opt_tcprecvflags, 'Y') != NULL) {
+	    tcp_recv_flags |= TH_Y;
+	  }
+	}
+	
+	if (usec_delay.it_interval.tv_usec == 0) {
+	  opt_waitinuseczero = 1;
+	}
+	
+	if (icmp_id == -1)
+		icmp_id=getpid();
+	
 	return 1;
 }

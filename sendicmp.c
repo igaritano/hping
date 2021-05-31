@@ -83,7 +83,7 @@ void send_icmp_echo(void)
 	icmp->type = opt_icmptype;	/* echo replay or echo request */
 	icmp->code = opt_icmpcode;	/* should be indifferent */
 	icmp->checksum = 0;
-	icmp->un.echo.id = getpid() & 0xffff;
+	icmp->un.echo.id = icmp_id  & 0xffff;
 	icmp->un.echo.sequence = _icmp_seq;
 
 	/* data */
@@ -96,8 +96,11 @@ void send_icmp_echo(void)
 		icmp->checksum = icmp_cksum;
 
 	/* adds this pkt in delaytable */
-	if (opt_icmptype == ICMP_ECHO)
-		delaytable_add(_icmp_seq, 0, time(NULL), get_usec(), S_SENT);
+	if (opt_icmptype == ICMP_ECHO) {
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		delaytable_add(_icmp_seq, 0, tv.tv_sec, tv.tv_usec, S_SENT);
+	}
 
 	/* send packet */
 	send_ip_handler(packet, ICMPHDR_SIZE + data_size);
@@ -127,7 +130,7 @@ void send_icmp_timestamp(void)
 	icmp->type = opt_icmptype;	/* echo replay or echo request */
 	icmp->code = 0;
 	icmp->checksum = 0;
-	icmp->un.echo.id = getpid() & 0xffff;
+	icmp->un.echo.id = icmp_id  & 0xffff;
 	icmp->un.echo.sequence = _icmp_seq;
 	tstamp_data->orig = htonl(get_midnight_ut_ms());
 	tstamp_data->recv = tstamp_data->tran = 0;
@@ -140,8 +143,11 @@ void send_icmp_timestamp(void)
 		icmp->checksum = icmp_cksum;
 
 	/* adds this pkt in delaytable */
-	if (opt_icmptype == ICMP_TIMESTAMP)
-		delaytable_add(_icmp_seq, 0, time(NULL), get_usec(), S_SENT);
+	if (opt_icmptype == ICMP_TIMESTAMP) {
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		delaytable_add(_icmp_seq, 0, tv.tv_sec, tv.tv_usec, S_SENT);
+	}
 
 	/* send packet */
 	send_ip_handler(packet, ICMPHDR_SIZE + sizeof(struct icmp_tstamp_data));
@@ -169,7 +175,7 @@ void send_icmp_address(void)
 	icmp->type = opt_icmptype;	/* echo replay or echo request */
 	icmp->code = 0;
 	icmp->checksum = 0;
-	icmp->un.echo.id = getpid() & 0xffff;
+	icmp->un.echo.id = icmp_id  & 0xffff;
 	icmp->un.echo.sequence = _icmp_seq;
 	memset(packet+ICMPHDR_SIZE, 0, 4);
 
@@ -180,9 +186,12 @@ void send_icmp_address(void)
 		icmp->checksum = icmp_cksum;
 
 	/* adds this pkt in delaytable */
-	if (opt_icmptype == ICMP_TIMESTAMP)
-		delaytable_add(_icmp_seq, 0, time(NULL), get_usec(), S_SENT);
-
+	if (opt_icmptype == ICMP_TIMESTAMP) {
+		struct timeval tv;
+		gettimeofday(&tv, NULL);
+		delaytable_add(_icmp_seq, 0, tv.tv_sec, tv.tv_usec, S_SENT);
+	}
+	
 	/* send packet */
 	send_ip_handler(packet, ICMPHDR_SIZE + 4);
 	free (packet);

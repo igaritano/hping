@@ -1,5 +1,5 @@
 /* waitpacket.c -- handle and print the incoming packet
- * Copyright(C) 1999-2001 Salvatore Sanfilippo
+
  * Under GPL, see the COPYING file for more information about
  * the license. */
 
@@ -53,9 +53,9 @@ void wait_packet(void)
 	size = read_packet(packet, IP_MAX_SIZE+linkhdr_size);
 	switch(size) {
 	case 0:
-		return;
+	  return;
 	case -1:
-		exit(1);
+	  exit(1);
 	}
 
 	/* Check if the packet is shorter than the link header size */
@@ -225,6 +225,16 @@ void log_traceroute(void *packet, int size, int icmp_code)
 		src_ttl++;
 }
 
+void log_tcp_recv_pkt_order(void *packet)
+{
+  struct mytcphdr tcp;
+  memcpy(&tcp, packet, sizeof(tcp));
+
+  pkts_recv[ntohs(tcp.th_dport)-initsport] = '*';
+  pkts_recv_order[recv_pkt] = ntohs(tcp.th_dport)-initsport+1;
+
+}
+
 int recv_icmp(void *packet, size_t size)
 {
 	struct myicmphdr icmp;
@@ -243,7 +253,7 @@ int recv_icmp(void *packet, size_t size)
 	if ((icmp.type == ICMP_ECHOREPLY  ||
 	     icmp.type == ICMP_TIMESTAMPREPLY ||
 	     icmp.type == ICMP_ADDRESSREPLY) &&
-		icmp.un.echo.id == (getpid() & 0xffff))
+ 		icmp.un.echo.id == (icmp_id & 0xffff))
 	{
 		int icmp_seq = icmp.un.echo.sequence;
 		int status;
@@ -254,7 +264,7 @@ int recv_icmp(void *packet, size_t size)
 		status = rtt(&icmp_seq, 0, &ms_delay);
 		log_ip(status, icmp_seq);
 
-		printf("icmp_seq=%d rtt=%.1f ms\n", icmp_seq, ms_delay);
+ 		printf("icmp_id=%d icmp_seq=%d rtt=%.1f ms\n",icmp_id, icmp_seq, ms_delay);
 		if (icmp.type == ICMP_TIMESTAMPREPLY) {
 			if ((size - ICMPHDR_SIZE) >= 12)
 				log_icmp_ts(packet+ICMPHDR_SIZE);
@@ -343,6 +353,83 @@ int recv_tcp(void *packet, size_t size)
 	}
 	memcpy(&tcp, packet, sizeof(tcp));
 
+	/* Check if packet flags match expected flags */
+	if (opt_tcprecvflags[0] != '\0') {
+
+	  int tcprecvflags = 0;
+	  
+	  if (tcp_recv_flags & TH_FIN) {
+	    if (!(tcp.th_flags & TH_FIN)) {
+	      tcprecvflags = 1;
+	    }
+	  } else {
+	    if (tcp.th_flags & TH_FIN) {
+	      tcprecvflags = 1;
+	    }
+	  }
+	  if (tcp_recv_flags & TH_SYN) {
+	    if (!(tcp.th_flags & TH_SYN)) {
+	      tcprecvflags = 1;
+	    }
+	  } else {
+	    if (tcp.th_flags & TH_SYN) {
+	      tcprecvflags = 1;
+	    }
+	  }
+	  if (tcp_recv_flags & TH_ACK) {
+	    if (!(tcp.th_flags & TH_ACK)) {
+	      tcprecvflags = 1;
+	    }
+	  } else {
+	    if (tcp.th_flags & TH_ACK) {
+	      tcprecvflags = 1;
+	    }
+	  }
+	  if (tcp_recv_flags & TH_PUSH) {
+	    if (!(tcp.th_flags & TH_PUSH)) {
+	      tcprecvflags = 1;
+	    }
+	  } else {
+	    if (tcp.th_flags & TH_PUSH) {
+	      tcprecvflags = 1;
+	    }
+	  }
+	  if (tcp_recv_flags & TH_URG) {
+	    if (!(tcp.th_flags & TH_URG)) {
+	      tcprecvflags = 1;
+	    }
+	  } else {
+	    if (tcp.th_flags & TH_URG) {
+	      tcprecvflags = 1;
+	    }
+	  }
+	  if (tcp_recv_flags & TH_X) {
+	    if (!(tcp.th_flags & TH_X)) {
+	      tcprecvflags = 1;
+	    }
+	  } else {
+	    if (tcp.th_flags & TH_X) {
+	      tcprecvflags = 1;
+	    }
+	  }
+	  if (tcp_recv_flags & TH_Y) {
+	    if (!(tcp.th_flags & TH_Y)) {
+	      tcprecvflags = 1;
+	    }
+	  } else {
+	    if (tcp.th_flags & TH_Y) {
+	      tcprecvflags = 1;
+	    }
+	  }
+	  if (tcprecvflags) {
+	    return 0;
+	  }	  
+	}
+
+	if (opt_tcprecvpkts) {
+	  log_tcp_recv_pkt_order(packet);
+	}
+	
 	/* check if the packet matches */
 	if ((ntohs(tcp.th_sport) == dst_port) ||
 	    (opt_force_incdport &&
@@ -386,10 +473,11 @@ int recv_tcp(void *packet, size_t size)
 		if (flags[0] == '\0')    strcat(flags, "none");
 
 		log_ip(status, sequence);
+		
 		printf("sport=%d flags=%s seq=%d win=%d rtt=%.1f ms\n",
 			ntohs(tcp.th_sport), flags, sequence,
 			ntohs(tcp.th_win), ms_delay);
-
+		
 		if (opt_verbose) {
 			printf("seq=%lu ack=%lu sum=%x urp=%u\n\n",
 					(unsigned long) ntohl(tcp.th_seq),

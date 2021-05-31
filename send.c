@@ -77,18 +77,38 @@ void send_packet (int signal_id)
 	else if (opt_icmpmode)	send_icmp();
 	else if (opt_udpmode)	send_udp();
 	else			send_tcp();
-
+	
 	sent_pkt++;
 	Signal(SIGALRM, send_packet);
-
+	
 	if (count != -1 && count == sent_pkt) { /* count reached? */
-		Signal(SIGALRM, print_statistics);
-		alarm(COUNTREACHED_TIMEOUT);
+	  Signal(SIGALRM, print_statistics);
+	  if (!opt_waitpkts) {
+	    opt_waitpkts = COUNTREACHED_TIMEOUT;
+	  }	  
+	  alarm(opt_waitpkts);
 	} else if (!opt_listenmode) {
-		if (opt_waitinusec == FALSE)
-			alarm(sending_wait);
-		else
-			setitimer(ITIMER_REAL, &usec_delay, NULL);
+	  if (opt_waitinusec == FALSE) {
+	    if (sending_wait) {
+	      alarm(sending_wait);
+	    } else {
+	      send_packet(SIGALRM); // alarm(0)
+	    }
+	  } else {
+	    if (opt_waitinuseczero) { // timer zero
+ 	      send_packet(SIGALRM);
+	    } else {
+	      // stop timer on last pkt in order to alarm(opt_waitpkts) take effect
+	      // otherwise timer raises SIGALRM without waiting opt_waitpkts
+	      if (count == (sent_pkt+2)) { 
+		usec_delay.it_interval.tv_usec = 0;
+		setitimer(ITIMER_REAL, &usec_delay, NULL); // stop timer
+	      }
+	      if (sent_pkt == 1) { // set timer once
+		setitimer(ITIMER_REAL, &usec_delay, NULL); // timer restarts automatically
+	      }
+	    }
+	  }
 	}
 	errno = errno_save;
 }

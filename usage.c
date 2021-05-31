@@ -24,6 +24,7 @@ void	show_usage(void)
 "      --fast      alias for -i u10000 (10 packets for second)\n"
 "      --faster    alias for -i u1000 (100 packets for second)\n"
 "      --flood	   sent packets as fast as possible. Don't show replies.\n"
+"  --wait-pkts     wait X seconds to receive packets, default 1 second\n"
 "  -n  --numeric   numeric output\n"
 "  -q  --quiet     quiet\n"
 "  -I  --interface interface name (otherwise default routing interface)\n"
@@ -88,6 +89,7 @@ void	show_usage(void)
 "  -Y  --ymas       set Y unused flag (0x80)\n"
 "  --tcpexitcode    use last tcp->th_flags as exit code\n"
 "  --tcp-timestamp  enable the TCP timestamp option to guess the HZ/uptime\n"
+"  --tcp-recv-pkts  enable TCP received packets and order\n"
 "Clock skew detection\n"
 "  --clock-skew     enable clock skew detection. Try with -S against open port\n"
 "  --clock-skew-win window of time (in seconds) for CS detection. Default 300\n"
@@ -140,6 +142,7 @@ void icmp_help(void)
 "  --icmp-srcport   set tcp/udp source port      ( default random )\n"
 "  --icmp-dstport   set tcp/udp destination port ( default random )\n"
 "  --icmp-cksum     set icmp checksum            ( default the right cksum)\n"
+"  --icmp-id        set icmp id                  ( default random )\n"
 	);
 	exit(0);
 }

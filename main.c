@@ -44,8 +44,8 @@ unsigned int
 	signlen,
 	lsr_length = 0,
 	ssr_length = 0,
-	tcp_ack;
-
+	tcp_ack,
+	tcp_recv_flags = 0;
 
 unsigned short int
 	data_size = 0;
@@ -96,6 +96,7 @@ int
 	opt_badcksum	= FALSE,
 	opt_tr_keep_ttl = FALSE,
 	opt_tcp_timestamp = FALSE,
+	opt_tcprecvpkts = 0,
         opt_clock_skew  = FALSE,
         cs_window       = DEFAULT_CS_WINDOW,
         cs_window_shift = DEFAULT_CS_WINDOW_SHIFT,
@@ -109,6 +110,8 @@ int
 	opt_cplt_rte    = FALSE,
 	opt_beep	= FALSE,
 	opt_flood	= FALSE,
+	opt_waitpkts    = 0,
+	opt_waitinuseczero = 0,
 	tcp_exitcode	= 0,
 	src_ttl		= DEFAULT_TTL,
 	src_id		= -1, /* random */
@@ -128,12 +131,17 @@ int
 	icmp_ip_tos	= DEFAULT_ICMP_IP_TOS,
 	icmp_ip_tot_len = DEFAULT_ICMP_IP_TOT_LEN,
 	icmp_ip_id	= DEFAULT_ICMP_IP_ID,
+	icmp_id		= DEFAULT_ICMP_ID,
 	icmp_ip_protocol= DEFAULT_ICMP_IP_PROTOCOL,
 	icmp_ip_srcport	= DEFAULT_DPORT,
 	icmp_ip_dstport	= DEFAULT_DPORT,
 	opt_force_icmp  = FALSE,
 	icmp_cksum	= DEFAULT_ICMP_CKSUM,
 	raw_ip_protocol	= DEFAULT_RAW_IP_PROTOCOL;
+
+char*   pkts_recv;
+
+int*    pkts_recv_order;
 
 char
 	datafilename	[1024],
@@ -148,7 +156,8 @@ char
 	sign		[1024],
 	rsign		[1024], /* reverse sign (hping -> gniph) */
 	ip_opt		[40],
-	*opt_scanports = "";
+	*opt_scanports = "",
+	opt_tcprecvflags[16];
 
 unsigned char
 	lsr		[255] = {0},
@@ -333,7 +342,7 @@ int main(int argc, char **argv)
 		strcat(setflags, "udp mode");
 		hdr_size = IPHDR_SIZE + UDPHDR_SIZE;
 	} else {
-		if (tcp_th_flags & TH_RST)  strcat(setflags, "R");
+
 		if (tcp_th_flags & TH_SYN)  strcat(setflags, "S");
 		if (tcp_th_flags & TH_ACK)  strcat(setflags, "A");
 		if (tcp_th_flags & TH_FIN)  strcat(setflags, "F");
@@ -364,6 +373,16 @@ int main(int argc, char **argv)
 		}
 	}
 
+	/* Allocate and initialize for tcp received packets order */
+	if (opt_tcprecvpkts) {
+	  pkts_recv = (char *) malloc(count * sizeof(char));
+	  pkts_recv_order = (int *) malloc(count * sizeof(int));
+	  for (int i = 0; i < count; ++i) {
+	    pkts_recv[i] = '.';
+	    pkts_recv_order[i] = -1;
+	  }
+	}
+	
 	/* start packet sending */
 	kill(getpid(), SIGALRM);
 

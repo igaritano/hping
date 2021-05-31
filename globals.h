@@ -32,7 +32,8 @@ extern unsigned int
 		tcp_seqnum,
 		set_ack,
 		ip_header_length,
-		tcp_ack;
+		tcp_ack,
+		tcp_recv_flags;
 
 extern unsigned short int
 		data_size;
@@ -78,6 +79,7 @@ extern int	opt_debug,
 		opt_badcksum,
 		opt_tr_keep_ttl,
 		opt_tcp_timestamp,
+		opt_tcprecvpkts,
                 opt_clock_skew,
                 cs_window,
                 cs_window_shift,
@@ -90,6 +92,8 @@ extern int	opt_debug,
 		opt_ssrr,
 		opt_beep,
 		opt_flood,
+		opt_waitpkts,
+		opt_waitinuseczero,  
 		tcp_exitcode,
 		src_ttl,
 		src_id,
@@ -109,12 +113,16 @@ extern int	opt_debug,
 		icmp_ip_tos,
 		icmp_ip_tot_len,
 		icmp_ip_id,
+		icmp_id,
 		icmp_ip_srcport,
 		icmp_ip_dstport,
 		opt_force_icmp,
 		icmp_ip_protocol,
 		icmp_cksum,
 		raw_ip_protocol;
+
+extern char*    pkts_recv;
+extern int*     pkts_recv_order;
 
 extern unsigned char 	lsr[255],
 			ssr[255];
@@ -132,6 +140,7 @@ extern char	ifname[1024],
 		rsign[1024],
 		ip_opt[40],
 		ip_optlen,
+		opt_tcprecvflags[16],
 		*opt_scanports;
 
 extern struct sockaddr_in icmp_ip_src, icmp_ip_dst, icmp_gw, local, remote;
