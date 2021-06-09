@@ -68,7 +68,7 @@ void send_packet (int signal_id)
 {
 	int errno_save = errno;
 
-        if (count >= sent_pkt) {
+        if (count == -1 || count >= sent_pkt) {
 	  if (opt_rand_dest)
 	    select_next_random_dest();
        	  if (opt_rand_source)
