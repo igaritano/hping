@@ -68,20 +68,23 @@ void send_packet (int signal_id)
 {
 	int errno_save = errno;
 
-	if (opt_rand_dest)
-		select_next_random_dest();
-	if (opt_rand_source)
-		select_next_random_source();
+        if (count >= sent_pkt) {
+	  if (opt_rand_dest)
+	    select_next_random_dest();
+       	  if (opt_rand_source)
+	    select_next_random_source();
 
-	if (opt_rawipmode)	send_rawip();
-	else if (opt_icmpmode)	send_icmp();
-	else if (opt_udpmode)	send_udp();
-	else			send_tcp();
+	  if (opt_rawipmode) send_rawip();
+	  else if (opt_icmpmode) send_icmp();
+	  else if (opt_udpmode) send_udp();
+	  else send_tcp();
+        }
 	
 	sent_pkt++;
 	Signal(SIGALRM, send_packet);
 	
-	if (count != -1 && count == sent_pkt) { /* count reached? */
+	if (count != -1 && count < sent_pkt) { /* count reached? */
+          sent_pkt = count;
 	  Signal(SIGALRM, print_statistics);
 	  if (!opt_waitpkts) {
 	    opt_waitpkts = COUNTREACHED_TIMEOUT;
@@ -99,8 +102,8 @@ void send_packet (int signal_id)
  	      send_packet(SIGALRM);
 	    } else {
 	      // stop timer on last pkt in order to alarm(opt_waitpkts) take effect
-	      // otherwise timer raises SIGALRM without waiting opt_waitpkts
-	      if (count == (sent_pkt+2)) { 
+	      // otherwise timer raises SIGALRM without waiting for any packet
+	      if (count == (sent_pkt+1)) { 
 		usec_delay.it_interval.tv_usec = 0;
 		setitimer(ITIMER_REAL, &usec_delay, NULL); // stop timer
 	      }
