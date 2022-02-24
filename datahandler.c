@@ -1,12 +1,12 @@
-/* 
- * $smu-mark$ 
- * $name: datahandler.c$ 
- * $author: Salvatore Sanfilippo <antirez@invece.org>$ 
- * $copyright: Copyright (C) 1999 by Salvatore Sanfilippo$ 
- * $license: This software is under GPL version 2 of license$ 
- * $date: Fri Nov  5 11:55:47 MET 1999$ 
- * $rev: 8$ 
- */ 
+/*
+ * $smu-mark$
+ * $name: datahandler.c$
+ * $author: Salvatore Sanfilippo <antirez@invece.org>$
+ * $copyright: Copyright (C) 1999 by Salvatore Sanfilippo$
+ * $license: This software is under GPL version 2 of license$
+ * $date: Fri Nov  5 11:55:47 MET 1999$
+ * $rev: 8$
+ */
 
 /* $Id: datahandler.c,v 1.2 2003/09/01 00:22:06 antirez Exp $ */
 
@@ -36,6 +36,9 @@ void data_handler(char *data, int data_size)
 
 	if (opt_datafromfile)
 		datafiller(data, data_size);
+	else if (opt_payload)
+		for (int i = 0; i < data_size; i++)
+			sscanf(payload_data + (i * 4), "%4hhx", &data[i]);
 	else
 		memset(data, 'X', data_size);
 }

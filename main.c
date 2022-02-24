@@ -137,7 +137,8 @@ int
 	icmp_ip_dstport	= DEFAULT_DPORT,
 	opt_force_icmp  = FALSE,
 	icmp_cksum	= DEFAULT_ICMP_CKSUM,
-	raw_ip_protocol	= DEFAULT_RAW_IP_PROTOCOL;
+	raw_ip_protocol	= DEFAULT_RAW_IP_PROTOCOL,
+	opt_payload = FALSE;
 
 char*   pkts_recv;
 
@@ -157,7 +158,8 @@ char
 	rsign		[1024], /* reverse sign (hping -> gniph) */
 	ip_opt		[40],
 	*opt_scanports = "",
-	opt_tcprecvflags[16];
+	opt_tcprecvflags[16],
+	payload_data[1024];
 
 unsigned char
 	lsr		[255] = {0},

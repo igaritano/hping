@@ -119,7 +119,8 @@ extern int	opt_debug,
 		opt_force_icmp,
 		icmp_ip_protocol,
 		icmp_cksum,
-		raw_ip_protocol;
+		raw_ip_protocol,
+		opt_payload;
 
 extern char*    pkts_recv;
 extern int*     pkts_recv_order;
@@ -141,7 +142,8 @@ extern char	ifname[1024],
 		ip_opt[40],
 		ip_optlen,
 		opt_tcprecvflags[16],
-		*opt_scanports;
+		*opt_scanports,
+		payload_data[1024];
 
 extern struct sockaddr_in icmp_ip_src, icmp_ip_dst, icmp_gw, local, remote;
 extern struct itimerval usec_delay;
