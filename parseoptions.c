@@ -36,7 +36,7 @@ enum {	OPT_COUNT, OPT_INTERVAL, OPT_NUMERIC, OPT_QUIET, OPT_INTERFACE,
 	OPT_ICMP_IPSRC, OPT_ICMP_IPDST, OPT_ICMP_SRCPORT, OPT_ICMP_DSTPORT,
 	OPT_ICMP_GW, OPT_FORCE_ICMP, OPT_APD_SEND, OPT_SCAN, OPT_FASTER,
 	OPT_BEEP, OPT_FLOOD, OPT_CLOCK_SKEW, OPT_CS_WINDOW, OPT_CS_WINDOW_SHIFT,
-        OPT_CS_VECTOR_LEN, OPT_TCPRECVFLAGS, OPT_TCPRECVPKTS, OPT_WAITPKTS };
+        OPT_CS_VECTOR_LEN, OPT_TCPRECVFLAGS, OPT_TCPRECVPKTS, OPT_WAITPKTS, OPT_PAYLOAD };
 
 static struct ago_optlist hping_optlist[] = {
 	{ 'c',	"count",	OPT_COUNT,		AGO_NEEDARG },
@@ -133,6 +133,7 @@ static struct ago_optlist hping_optlist[] = {
 	{ '\0', "clock-skew-win", OPT_CS_WINDOW,	AGO_NEEDARG},
 	{ '\0', "clock-skew-win-shift", OPT_CS_WINDOW_SHIFT,	AGO_NEEDARG},
 	{ '\0', "clock-skew-packets-per-sample", OPT_CS_VECTOR_LEN,AGO_NEEDARG},
+	{ '\0', "payload", OPT_PAYLOAD, AGO_OPTARG|AGO_EXCEPT0 },
 	AGO_LIST_TERM
 };
 
@@ -400,6 +401,11 @@ int parse_options(int argc, char **argv)
 		case OPT_FILE:
 			opt_datafromfile = TRUE;
 			strlcpy(datafilename, ago_optarg, 1024);
+			break;
+		case OPT_PAYLOAD:
+			opt_payload = TRUE;
+			strlcpy(payload_data, ago_optarg, 1024);
+			data_size = strlen(ago_optarg)/4;
 			break;
 		case OPT_DUMP:
 			opt_hexdump = TRUE;

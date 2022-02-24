@@ -103,6 +103,7 @@ void	show_usage(void)
 "  -J  --print      dump printable characters\n"
 "  -B  --safe       enable 'safe' protocol\n"
 "  -u  --end        tell you when --file reached EOF and prevent rewind\n"
+"  --payload        data to send as hex string following the format 0xff0xfe (max 256 bytes)\n"
 "  -T  --traceroute traceroute mode              (implies --bind and --ttl 1)\n"
 "  --tr-stop        Exit when receive the first not ICMP in traceroute mode\n"
 "  --tr-keep-ttl    Keep the source TTL fixed, useful to monitor just one hop\n"
